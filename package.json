@@ -1,0 +1,43 @@
+{
+  "name": "adl-translate",
+  "version": "1.0.0",
+  "main": "src/app.ts",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "postbuild": "node fix-imports.js",
+    "prebuild": "rm -rf ./dist && mkdir dist",
+    "dev": "ts-node src/app.ts",
+    "build": "yarn prebuild && tsc && yarn postbuild",
+    "start": "yarn build && node dist/app.js"
+  },
+  "bin": {
+    "translate": "dist/app.js"
+  },
+  "dependencies": {
+    "@topcli/spinner": "^2.1.2",
+    "axios": "^1.7.9",
+    "boxen": "^8.0.1",
+    "chalk": "^5.4.1",
+    "dotenv": "^16.4.7",
+    "figlet": "^1.8.0",
+    "franc-min": "^6.2.0",
+    "fs-extra": "^11.3.0",
+    "ora": "^8.2.0",
+    "uuid": "^11.1.0",
+    "xml2js": "^0.6.2",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/chalk": "^2.2.4",
+    "@types/figlet": "^1.7.0",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^22.13.4",
+    "@types/xml2js": "^0.4.14",
+    "@types/yargs": "^17.0.33",
+    "replace-in-file": "^8.3.0",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}
