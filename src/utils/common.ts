@@ -1,6 +1,7 @@
 import { extensions, platforms } from "./constants";
 import path from "path";
 import fs from "fs-extra";
+import { stopProgress } from "./console-print";
 
 export function isEnglishOnly(text: string): boolean {
   for (let i = 0; i < text.length; i++) {
@@ -28,6 +29,10 @@ export function isEnglishOnly(text: string): boolean {
           continue;
         }
       }
+      stopProgress(
+        `CharCode not supported ${i} ${text[i]} ${charCode}\n`,
+        false
+      );
       return false; // Found a non-ASCII character that is not allowed
     }
   }

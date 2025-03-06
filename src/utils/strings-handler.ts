@@ -15,7 +15,8 @@ export async function stringsToJson(inputPath: string, destPath: string) {
   const jsonObj: Record<string, string> = {};
 
   lines.forEach((line) => {
-    const match = line.match(/"(.+)"\s*=\s*"(.+)";/);
+    // const match = line.match(/"(.+)"\s*=\s*"(.+)";/);
+    const match = line.match(/"(.+)"\s*=\s*"(.*?)";/);
     if (match) {
       jsonObj[match[1]] = match[2];
     }

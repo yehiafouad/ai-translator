@@ -1,28 +1,46 @@
 import { Builder, parseStringPromise } from "xml2js";
 import fs from "fs-extra";
 import path from "path";
-import { printSuccess, printWarning } from "./console-print";
-import { languages } from "./constants";
+import { printSuccess } from "./console-print";
 
 // Convert XML to JSON
-export async function convertXMLToJson(data: any) {
+export async function convertXMLToJson(data: string) {
   const parsedXml = await parseStringPromise(data);
-  let modifiedXml: any;
-  if (
-    parsedXml.resources &&
-    parsedXml.resources.string &&
-    Array.isArray(parsedXml.resources.string)
-  ) {
-    parsedXml.resources.string.forEach((msg: any) => {
-      modifiedXml = { [msg.$.name]: msg["_"], ...modifiedXml };
-    });
-  } else {
-    printWarning(`Warning: 'message' property not found in XML structure.`);
-  }
-  // Format JSON with indentation
-  modifiedXml = JSON.stringify(modifiedXml, null, 2);
+  let modifiedXml: any = {};
 
-  return JSON.parse(modifiedXml);
+  if (parsedXml.resources && parsedXml.resources.string) {
+    const message = parsedXml.resources.string;
+
+    if (Array.isArray(message)) {
+      message.forEach((msg: any) => {
+        modifiedXml[msg.$.name] = decodeXmlEntities(msg["_"]);
+      });
+    } else {
+      modifiedXml[message.$.name] = decodeXmlEntities(message["_"]);
+    }
+  } else {
+    console.warn(`Warning: 'message' property not found in XML structure.`);
+  }
+
+  return modifiedXml;
+}
+
+// Function to properly decode XML entities
+function decodeXmlEntities(text: string) {
+  if (text) {
+    return text
+      .replace(/\\n/g, "\n") // Convert escaped \n back to actual newlines
+      .replace(/\\t/g, "\t") // Convert escaped tabs
+      .replace(/\\"/g, '"') // Convert escaped quotes
+      .replace(/\\\\/g, "\\") // Fix double backslashes
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'")
+      .replace(/&amp;/g, "&");
+  } else {
+    return text;
+  }
 }
 
 export async function jsonToXML(
@@ -35,8 +53,11 @@ export async function jsonToXML(
     resources: {
       string: Object.entries(jsonData).map(([key, value]) => ({
         $: { name: key },
-        _:
-          language === "fr" ? (value as string).replaceAll(/'/g, "\\'") : value,
+        _: (value as string)
+          .replaceAll(/'/g, "\\'")
+          .replaceAll(/"/g, '\\"')
+          .replaceAll(/&/g, "&amp;"),
+        //language === "fr" ? (value as string).replaceAll(/'/g, "\\'") : value,
       })),
     },
   };

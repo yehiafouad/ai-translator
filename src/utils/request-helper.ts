@@ -24,7 +24,7 @@ export const createRequest = async (
       headers: config.headers,
       params: config.params,
       responseType: "json",
-      // timeout: 60000 * 2, // 2 mins
+      timeout: 60000 * 5, // 2 mins
     });
 
     return response.data;

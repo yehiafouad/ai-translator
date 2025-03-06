@@ -32,6 +32,7 @@ const argv: any = yargs(process.argv.slice(2))
     alias: "p",
     type: "string",
     describe: "Platform name",
+    choices: Object.values(platforms),
     demandOption: false,
     required: false,
   })
@@ -46,7 +47,7 @@ const argv: any = yargs(process.argv.slice(2))
   .option("language", {
     alias: "l",
     type: "string",
-    choices: ["fr", "hi", "ur"],
+    choices: Object.values(languages),
     describe: "Language to translate",
     demandOption: false,
     required: false,
@@ -254,11 +255,8 @@ const transformFiles = async (
           /^([a-z]{2})(?=\.lproj$)/i,
           langISOCode || "ar"
         );
-
-        destPath = path.join(
-          path.resolve(path.dirname(resolvedSourcePath), ".."),
-          newFolderName
-        );
+        const dirPath = path.dirname(resolvedSourcePath);
+        destPath = path.join(path.resolve(dirPath, ".."), newFolderName);
 
         fs.ensureDirSync(destPath);
 
@@ -306,44 +304,3 @@ if (!sourcePath) {
 const translatingMessage = `Starting Translation Files To ${langKey}`;
 printInfo(`${translatingMessage}\n${"*".repeat(translatingMessage.length)}`);
 translateFiles(sourcePath);
-
-// Function to rename directories
-function renameLprojDirectories(basePath: string) {
-  // Read the contents of the base directory
-  fs.readdir(basePath, (err, files) => {
-    if (err) {
-      console.error(`Error reading directory: ${err.message}`);
-      return;
-    }
-
-    // Iterate over each file/directory in the base directory
-    files.forEach((file) => {
-      const fullPath = path.join(basePath, file);
-
-      // Check if the current item is a directory
-      if (fs.lstatSync(fullPath).isDirectory()) {
-        // If the directory ends with '.in.lproj', rename it
-        if (file.endsWith("in.lproj")) {
-          const newDirName = file.replace("in.lproj", "hi.lproj");
-          const newFullPath = path.join(basePath, newDirName);
-
-          // Rename the directory
-          fs.rename(fullPath, newFullPath, (renameErr) => {
-            if (renameErr) {
-              console.error(`Error renaming directory: ${renameErr.message}`);
-            } else {
-              console.log(`Renamed: ${fullPath} -> ${newFullPath}`);
-            }
-          });
-        } else {
-          // Recursively process subdirectories
-          renameLprojDirectories(fullPath);
-        }
-      }
-    });
-  });
-}
-
-// Example usage
-
-// renameLprojDirectories(sourcePath);
