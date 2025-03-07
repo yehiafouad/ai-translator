@@ -16,6 +16,11 @@ import {
 } from "./utils/console-print";
 import { checkPath, findFiles, getKeyByValue } from "./utils/common";
 import { v4 as uuidv4 } from "uuid";
+import { fileURLToPath } from "url";
+
+// Convert the module URL to a file path
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Define CLI arguments
 const argv: any = yargs(process.argv.slice(2))
@@ -84,7 +89,7 @@ printInfo(`${consoleMessage}\n${"*".repeat(consoleMessage.length)}`);
 langISOCode = !langISOCode ? Object.values(languages)[0] : langISOCode;
 langKey = getKeyByValue(languages, langISOCode) || languages[langISOCode];
 
-async function processFile(filePath: string): Promise<void> {
+async function convertFile(filePath: string): Promise<any> {
   printTitleInfo(`\n${"=".repeat(50)}`);
   printTitleInfo(`Processing File: ${filePath}`);
   printTitleInfo(`${"=".repeat(50)}`);
@@ -106,39 +111,46 @@ async function processFile(filePath: string): Promise<void> {
   if (!jsonData) {
     calculateOperationStatus(filePath, "", "failure", "filesCount");
     printError(`Error processing File Translation: ${filePath}\n`);
+    return null;
   } else {
-    const uuid = uuidv4();
-    try {
-      const translatedJsonData = await translateRequest(
-        jsonData,
-        langKey,
-        uuid
-      );
-      if (!translatedJsonData) throw "Failed to translate file ";
-
-      stopProgress(`Translated Successfully`);
-      await transformFiles(filePath, translatedJsonData, true);
-      calculateOperationStatus(filePath, uuid, "success", "filesCount");
-
-      printSuccessMessage(filePath);
-    } catch (apiError) {
-      calculateOperationStatus(filePath, uuid, "failure", "filesCount");
-      stopProgress(`Error translating file ${filePath} to ${langKey}\n`, false);
-    }
+    return { filePath, jsonData };
   }
 }
 
-// async function translateInBatches(
-//   jsonData: any,
-//   langKey: string,
-//   uuid: string
-// ) {
-//   const apiCalls = Object.keys(jsonData).map((key) => async () => {
-//     return await translateRequest({ [key]: jsonData[key] }, langKey, uuid);
-//   });
+async function translateFilesInBatches(
+  filesData: { filePath: string; jsonData: any }[],
+  batchSize: number = 50
+) {
+  for (let i = 0; i < filesData.length; i += batchSize) {
+    const batch = filesData.slice(i, i + batchSize);
+    printTitleInfo(`* Starting batch (${batch.length}/${filesData.length})...`);
+    await Promise.all(
+      batch.map(async ({ filePath, jsonData }) => {
+        const uuid = uuidv4();
+        try {
+          const translatedJsonData = await translateRequest(
+            jsonData,
+            langKey,
+            uuid
+          );
+          if (!translatedJsonData) throw "Failed to translate file ";
 
-//   return await processApiCallsInBatches(apiCalls);
-// }
+          stopProgress(`Translated Successfully`);
+          await transformFiles(filePath, translatedJsonData, true);
+          calculateOperationStatus(filePath, uuid, "success", "filesCount");
+
+          printSuccessMessage(filePath);
+        } catch (apiError) {
+          calculateOperationStatus(filePath, uuid, "failure", "filesCount");
+          stopProgress(
+            `Error translating file ${filePath} to ${langKey}\n`,
+            false
+          );
+        }
+      })
+    );
+  }
+}
 
 async function translateFiles(inputFile: string) {
   startTime = performance.now();
@@ -146,8 +158,10 @@ async function translateFiles(inputFile: string) {
   if (!argv.l) delete languages[langKey];
 
   try {
-    const promises = paths.map((p) => processFile(p));
-    await Promise.all(promises);
+    const filesData = await Promise.all(paths.map(convertFile));
+    const validFilesData = filesData.filter((data) => data !== null);
+
+    await translateFilesInBatches(validFilesData);
 
     printSuccess(`Completed translations for ${langKey}`);
     calculateOperationStatus("", "", "success", "timing");
@@ -180,24 +194,44 @@ async function translateFiles(inputFile: string) {
 }
 
 function printFinalResult() {
+  let totalMins: number = 0;
+  const logEntries: string[] = [];
   consoleMessage = "✔ Translation complete for all languages! Files saved!";
   printTitleInfo(`${"=".repeat(consoleMessage.length)}\n\n`);
   printSuccess(`${consoleMessage}\n`, false);
 
-  let totalMins: number = 0;
   Object.keys(filesListLog).forEach((key) => {
-    printTitleInfo(`* ${key}:`);
-    printInfo(`   • Saved Files: ${filesListLog[key]["success"].length}`);
-    printInfo(`   • Failed Files: ${filesListLog[key]["failure"].length}`);
-    filesListLog[key]["failure"].forEach((f) => {
-      printError(`  ${f.fileID} - ${f.path}`, true);
-    });
-    printInfo(`   • Total Time: ${filesListLog[key].finishedTime} mins`);
-    totalMins += parseFloat(filesListLog[key].finishedTime.toFixed(2));
-  });
+    const successCount = filesListLog[key]["success"].length;
+    const failureCount = filesListLog[key]["failure"].length;
+    const finishedTime = filesListLog[key].finishedTime.toFixed(2);
 
-  printInfo(`• Total Mins: ${totalMins} mins`);
+    logEntries.push(`* ${key}:`);
+    logEntries.push(`   • Saved Files: ${successCount}`);
+    logEntries.push(`   • Failed Files: ${failureCount}`);
+    filesListLog[key]["failure"].forEach((f) => {
+      logEntries.push(`  ${f.fileID} - ${f.path}`);
+    });
+    logEntries.push(`   • Total Time: ${finishedTime} mins`);
+
+    totalMins += parseFloat(finishedTime);
+  });
+  logEntries.push(`• Total Mins: ${totalMins.toFixed(2)} mins`);
+  printInfo(logEntries.join("\n"));
+
   printTitleInfo(`\n\n${"=".repeat(consoleMessage.length)}`);
+  logEntries.push(`\n${"=".repeat(consoleMessage.length)}`);
+
+  // Ensure the logs directory exists
+  const logsDir = path.resolve(__dirname, "../logs");
+  fs.ensureDirSync(logsDir);
+
+  // Write to log file
+  const logFilePath = path.join(logsDir, "translation_log.txt");
+  const dateTime = new Date().toISOString();
+  const logContent = `Date: ${dateTime}\n${logEntries.join("\n")}\n\n`;
+
+  fs.appendFileSync(logFilePath, logContent, "utf-8");
+  printInfo(`Report Log executed to ${logFilePath}`);
 }
 
 function calculateOperationStatus(

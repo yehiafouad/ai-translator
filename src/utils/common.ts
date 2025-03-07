@@ -1,9 +1,9 @@
 import { extensions, platforms } from "./constants";
 import path from "path";
 import fs from "fs-extra";
-import { stopProgress } from "./console-print";
+import { printError } from "./console-print";
 
-export function isEnglishOnly(text: string): boolean {
+export function isEnglishOnly(text: string, fullPath: string): boolean {
   for (let i = 0; i < text.length; i++) {
     const charCode = text.charCodeAt(i);
     if (
@@ -29,9 +29,8 @@ export function isEnglishOnly(text: string): boolean {
           continue;
         }
       }
-      stopProgress(
-        `CharCode not supported ${i} ${text[i]} ${charCode}\n`,
-        false
+      printError(
+        `CharCode not supported ${i} ${text[i]} ${charCode} on file: ${fullPath}\n`
       );
       return false; // Found a non-ASCII character that is not allowed
     }
@@ -100,7 +99,7 @@ export async function checkPath(filePath: string, isConverted: boolean) {
 
 async function validateFile(fullPath: string, portalDirRegex: RegExp) {
   let fileData = await fs.readFile(fullPath, "utf-8");
-  const isEnglishContent = isEnglishOnly(fileData);
+  const isEnglishContent = isEnglishOnly(fileData, fullPath);
 
   if (!isEnglishContent) return null;
   if (
@@ -122,31 +121,34 @@ async function validateFile(fullPath: string, portalDirRegex: RegExp) {
 // Function to find all files recursively
 export async function findFiles(dir: string): Promise<string[]> {
   let results: string[] = [];
-  const stat = fs.statSync(dir);
+  const dirs = dir.split(",");
   const extRegex = /(.strings|.xml|.json)/i;
   const portalDirRegex = /(Localisation|Localization)/i;
-  const isFile = stat.isFile();
 
-  if (isFile && path.extname(dir).match(extRegex)) {
-    const isValid = await validateFile(dir, portalDirRegex);
-    if (isValid) results.push(isValid);
+  for (const singleDir of dirs) {
+    const stat = fs.statSync(singleDir);
+    const isFile = stat.isFile();
 
-    return results;
-  }
-
-  const files = fs.readdirSync(dir);
-
-  for (const file of files) {
-    const fullPath = path.join(dir, file);
-    const statFile = fs.statSync(fullPath);
-
-    if (statFile.isDirectory()) {
-      results = results.concat(await findFiles(fullPath));
-    } else if (path.extname(fullPath).match(extRegex)) {
-      const isValid = await validateFile(fullPath, portalDirRegex);
-
+    if (isFile && path.extname(singleDir).match(extRegex)) {
+      const isValid = await validateFile(singleDir, portalDirRegex);
       if (isValid) results.push(isValid);
+    } else {
+      const files = fs.readdirSync(singleDir);
+
+      for (const file of files) {
+        const fullPath = path.join(singleDir, file);
+        const statFile = fs.statSync(fullPath);
+
+        if (statFile.isDirectory()) {
+          results = results.concat(await findFiles(fullPath));
+        } else if (path.extname(fullPath).match(extRegex)) {
+          const isValid = await validateFile(fullPath, portalDirRegex);
+
+          if (isValid) results.push(isValid);
+        }
+      }
     }
   }
+
   return results;
 }

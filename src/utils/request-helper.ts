@@ -1,5 +1,10 @@
 import axios from "axios";
-import { printError, printInfo, showProgress } from "./console-print";
+import {
+  printError,
+  printInfo,
+  showProgress,
+  stopProgress,
+} from "./console-print";
 
 type ConfigValues = {
   body: any;
@@ -41,7 +46,7 @@ export const createRequest = async (
       printInfo(`Retrying request...`);
       await createRequest(config, retries - 1);
     } else {
-      printError(`Failed to translate file..`);
+      stopProgress(`Failed to translate file..`, false);
       return null;
     }
   }

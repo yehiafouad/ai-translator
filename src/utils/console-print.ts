@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import ora from "ora";
+import readline from "readline";
 
 const Spinner = ora();
 
@@ -33,8 +34,17 @@ export function stopProgress(message: string, success = true) {
 }
 
 export function printSuccessMessage(filePath: string) {
-  console.log(`\n${"-".repeat(50)}`);
+  console.log(`${"-".repeat(50)}`);
   console.log(`✔ File Processed Successfully`);
   console.log(`✔ File Path: ${filePath}`);
   console.log(`${"-".repeat(50)}\n`);
+}
+
+// Function to update a specific line
+function updateLine(index: number, text: string) {
+  let lines: string[] = [];
+  readline.cursorTo(process.stdout, 0, index); // Move cursor to line index
+  readline.clearLine(process.stdout, 0); // Clear current line
+  process.stdout.write(text); // Write new text
+  lines[index] = text; // Update stored value
 }
