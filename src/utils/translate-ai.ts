@@ -1,4 +1,4 @@
-import config from "config";
+import config from "../config/endpoints";
 import { createRequest } from "./request-helper";
 
 export const translateRequest = async (
@@ -7,7 +7,7 @@ export const translateRequest = async (
   uuid: string
 ) => {
   const response = await createRequest({
-    url: config.aiTranslateEndpoint as string,
+    url: process.env.AI_TRANSLATE_ENDPOINT as string,
     method: "POST",
     body: {
       id: uuid,
