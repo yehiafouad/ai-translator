@@ -97,23 +97,12 @@ export async function checkPath(filePath: string, isConverted: boolean) {
   return null;
 }
 
-async function validateFile(fullPath: string, portalDirRegex: RegExp) {
+async function validateFile(fullPath: string) {
   let fileData = await fs.readFile(fullPath, "utf-8");
   const isEnglishContent = isEnglishOnly(fileData, fullPath);
 
   if (!isEnglishContent) return null;
-  if (
-    fullPath.endsWith(extensions.portal) &&
-    path.dirname(fullPath).match(portalDirRegex)
-  ) {
-    fileData = JSON.parse(fileData);
-    if (!Object.keys(fileData).length) return null;
-    const hasObject =
-      Array.isArray(fileData) ||
-      Object.values(fileData).every((f) => typeof f === "object");
-
-    if (!hasObject) return fullPath;
-  } else if (path.extname(fullPath) !== extensions.portal) return fullPath;
+  if (path.extname(fullPath) !== extensions.portal) return fullPath;
 
   return null;
 }
@@ -130,7 +119,7 @@ export async function findFiles(dir: string): Promise<string[]> {
     const isFile = stat.isFile();
 
     if (isFile && path.extname(singleDir).match(extRegex)) {
-      const isValid = await validateFile(singleDir, portalDirRegex);
+      const isValid = await validateFile(singleDir);
       if (isValid) results.push(isValid);
     } else {
       const files = fs.readdirSync(singleDir);
@@ -142,9 +131,75 @@ export async function findFiles(dir: string): Promise<string[]> {
         if (statFile.isDirectory()) {
           results = results.concat(await findFiles(fullPath));
         } else if (path.extname(fullPath).match(extRegex)) {
-          const isValid = await validateFile(fullPath, portalDirRegex);
+          const isValidPath = await validatePath(fullPath);
 
-          if (isValid) results.push(isValid);
+          if (isValidPath) {
+            const isValid = await validateFile(fullPath);
+            if (isValid) results.push(isValid);
+          }
+        }
+      }
+    }
+  }
+
+  return results;
+}
+
+async function validatePath(fullPath: string) {
+  const portalDirRegex = /(Localisation|Localization)/i;
+  const extName = path.extname(fullPath);
+  const dirName = path.dirname(fullPath);
+  const baseName = path.basename(dirName);
+
+  if (extName === extensions.ios && baseName === "en.lproj") {
+    return true;
+  } else if (extName === extensions.android && baseName === "values") {
+    return true;
+  } else if (
+    extName === extensions.portal &&
+    path.dirname(fullPath).match(portalDirRegex)
+  ) {
+    let fileData = await fs.readFile(fullPath, "utf-8");
+
+    fileData = JSON.parse(fileData);
+    if (!Object.keys(fileData).length) return null;
+    const hasObject =
+      Array.isArray(fileData) ||
+      Object.values(fileData).every((f) => typeof f === "object");
+
+    if (!hasObject) return true;
+  }
+
+  return false;
+}
+
+export async function findMissingFiles(
+  dir: string,
+  prefix: string = "zh.lproj"
+): Promise<string[]> {
+  let results: string[] = [];
+  const dirs = dir.split(",");
+  const localizationDirRegex = /Localization$/i; // Ensure it matches directories ending with "Localization"
+
+  for (const singleDir of dirs) {
+    const stat = fs.statSync(singleDir);
+    const isFile = stat.isFile();
+
+    if (!isFile) {
+      const files = fs.readdirSync(singleDir);
+      const isLocalizationDir = localizationDirRegex.test(singleDir);
+
+      if (isLocalizationDir && !files.includes(prefix)) {
+        console.log(`Missing ${prefix} in: ${singleDir}`);
+        results.push(singleDir);
+      }
+
+      for (const file of files) {
+        const fullPath = path.join(singleDir, file);
+        const statFile = fs.statSync(fullPath);
+
+        if (statFile.isDirectory()) {
+          results = results.concat(await findMissingFiles(fullPath, prefix));
         }
       }
     }
