@@ -15,12 +15,10 @@
     "translate": "dist/app.js"
   },
   "dependencies": {
-    "@topcli/spinner": "^2.1.2",
     "axios": "^1.7.9",
     "boxen": "^8.0.1",
     "chalk": "^5.4.1",
     "dotenv": "^16.4.7",
-    "figlet": "^1.8.0",
     "franc-min": "^6.2.0",
     "fs-extra": "^11.3.0",
     "ora": "^8.2.0",
@@ -30,7 +28,6 @@
   },
   "devDependencies": {
     "@types/chalk": "^2.2.4",
-    "@types/figlet": "^1.7.0",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.13.4",
     "@types/xml2js": "^0.4.14",

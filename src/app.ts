@@ -17,6 +17,9 @@ import {
 import { checkPath, findFiles, getKeyByValue } from "./utils/common";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
+import dotEnv from "dotenv";
+
+dotEnv.config();
 
 // Convert the module URL to a file path
 const __filename = fileURLToPath(import.meta.url);

@@ -1,5 +1,5 @@
+import config from "config";
 import { createRequest } from "./request-helper";
-import { v4 as uuidv4 } from "uuid";
 
 export const translateRequest = async (
   data: any,
@@ -7,11 +7,8 @@ export const translateRequest = async (
   uuid: string
 ) => {
   const response = await createRequest({
-    url: "https://dev-translator-app.azurewebsites.net/api/translate?code=NancxpqqpI3yM7lCSONa0AOxsS_kGl2b3NcTV8yzmmvNAzFut10iYQ%3D%3D",
+    url: config.aiTranslateEndpoint as string,
     method: "POST",
-    params: {
-      code: "NancxpqqpI3yM7lCSONa0AOxsS_kGl2b3NcTV8yzmmvNAzFut10iYQ%3D%3D",
-    },
     body: {
       id: uuid,
       data,
