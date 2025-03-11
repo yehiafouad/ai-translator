@@ -12,15 +12,9 @@ import {
   printSuccess,
   printSuccessMessage,
   printTitleInfo,
-  printWarning,
   stopProgress,
 } from "./utils/console-print";
-import {
-  checkPath,
-  findFiles,
-  findMissingFiles,
-  getKeyByValue,
-} from "./utils/common";
+import { checkPath, findFiles, getKeyByValue } from "./utils/common";
 import { v4 as uuidv4 } from "uuid";
 import { fileURLToPath } from "url";
 import dotEnv from "dotenv";
@@ -349,10 +343,3 @@ if (!sourcePath) {
 const translatingMessage = `Starting Translation Files To ${langKey}`;
 printInfo(`${translatingMessage}\n${"*".repeat(translatingMessage.length)}`);
 translateFiles(sourcePath);
-
-// const result = await findMissingFiles(sourcePath, "zh.lproj");
-
-// printWarning(`Missing Files: \n************`);
-// result.forEach((r) => {
-//   printInfo(`• ${r}`);
-// });

@@ -11,7 +11,7 @@ export const languages: { [key: string]: string } = {
   Nepali: "ne",
   Marathi: "mr",
   Malay: "ms",
-  // New imported languages
+  // -------------------- New imported languages
   Albanian: "sq",
   Armenian: "hy",
   Azerbaijani: "az",
@@ -43,9 +43,8 @@ export const languages: { [key: string]: string } = {
   Macedonian: "mk",
   Maltese: "mt",
   Mandarin: "zh-CN",
-  "Mandarin Chinese": "zh",
   Mongolian: "mn",
-  Norwegian: "no",
+  Norwegian: "nb",
   Oriya: "or",
   Pashto: "ps",
   Polish: "pl",
@@ -55,11 +54,12 @@ export const languages: { [key: string]: string } = {
   Sinhala: "si",
   Slovak: "sk",
   Slovene: "sl",
-  Tagalog: "tl",
   Ukrainian: "uk",
   Uzbek: "uz",
   Vietnamese: "vi",
   Welsh: "cy",
+  "zh-Hans": "zh-Hans",
+  "zh-Hant": "zh-Hant",
 };
 
 export const extensions = {
