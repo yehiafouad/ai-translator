@@ -133,9 +133,7 @@ async function translateFilesInBatches(
   for (let i = 0; i < filesData.length; i += batchSize) {
     const batch = filesData.slice(i, i + batchSize);
     printTitleInfo(
-      `* Starting batch (${i + batchSize}/${
-        filesData.length - i + batchSize
-      })...`
+      `* Starting batch (${i + batchSize}/${filesData.length})...`
     );
     await Promise.all(
       batch.map(async ({ filePath, jsonData }) => {
@@ -239,12 +237,12 @@ function printFinalResult() {
   fs.ensureDirSync(logsDir);
 
   // Write to log file
-  const logFilePath = path.join(logsDir, "translation_log.txt");
+  const logFilePath = path.join(logsDir, `${platform}_translation_log.txt`);
   const dateTime = new Date().toISOString();
   const logContent = `Date: ${dateTime}\n${logEntries.join("\n")}\n\n`;
 
   fs.appendFileSync(logFilePath, logContent, "utf-8");
-  printInfo(`Report Log executed to ${logFilePath}`);
+  printInfo(`Report Log for executed to ${logFilePath}`);
 }
 
 function calculateOperationStatus(

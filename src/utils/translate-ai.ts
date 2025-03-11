@@ -1,4 +1,3 @@
-import config from "../config/endpoints";
 import { createRequest } from "./request-helper";
 
 export const translateRequest = async (

@@ -43,7 +43,7 @@ export const createRequest = async (
         );
       }
 
-      printInfo(`Retrying request...`);
+      stopProgress(`Retrying request...`, false);
       await createRequest(config, retries - 1);
     } else {
       stopProgress(`Failed to translate file..`, false);
