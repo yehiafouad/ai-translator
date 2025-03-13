@@ -76,5 +76,5 @@ export async function jsonToXML(
 
   await fs.writeFile(outputFilePath, xml, "utf-8");
 
-  printSuccess(`Converted: ${inputPath} → ${outputFilePath}\n`);
+  printSuccess(`Converted: ${inputPath} → ${outputFilePath}`);
 }

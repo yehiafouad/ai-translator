@@ -45,6 +45,6 @@ export async function jsonToStrings(
   const outputFilePath = path.join(outputPath, outputFileName);
   fs.writeFileSync(outputFilePath, stringsContent, "utf8");
 
-  printSuccess(`Converted: ${inputPath} → ${outputFilePath}\n`);
+  printSuccess(`Converted: ${inputPath} → ${outputFilePath}`);
   return;
 }

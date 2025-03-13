@@ -1,7 +1,8 @@
 import { extensions, platforms } from "./constants";
 import path from "path";
 import fs from "fs-extra";
-import { printError } from "./console-print";
+import { printError, printSuccess } from "./console-print";
+import chalk from "chalk";
 
 export function isEnglishOnly(text: string, fullPath: string): boolean {
   for (let i = 0; i < text.length; i++) {
@@ -206,4 +207,30 @@ export async function findMissingFiles(
   }
 
   return results;
+}
+
+export function renameFolders(dir: string) {
+  const fileData = fs.readdirSync(dir, { withFileTypes: true });
+
+  fileData.forEach((file) => {
+    const fullPath = path.join(dir, file.name);
+
+    if (file.isDirectory()) {
+      if (file.name === "no.lproj") {
+        const newPath = path.join(dir, "nb.lproj");
+        fs.rename(fullPath, newPath, (err) => {
+          if (err) {
+            console.error(`Error renaming ${fullPath}:`, err);
+          } else {
+            printSuccess(
+              `Renamed: ${chalk.white(fullPath)} -> ${chalk.white(newPath)}`
+            );
+          }
+        });
+      } else {
+        // Recursively check subdirectories
+        renameFolders(fullPath);
+      }
+    }
+  });
 }

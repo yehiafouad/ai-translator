@@ -124,11 +124,11 @@ async function translateFilesInBatches(
   filesData: { filePath: string; jsonData: any }[],
   batchSize: number = 50
 ) {
+  let batchCount: number = 0;
   for (let i = 0; i < filesData.length; i += batchSize) {
     const batch = filesData.slice(i, i + batchSize);
-    printTitleInfo(
-      `* Starting batch (${i + batchSize}/${filesData.length})...`
-    );
+    batchCount += batch.length;
+    printTitleInfo(`* Starting batch (${batchCount}/${filesData.length})...`);
     await Promise.all(
       batch.map(async ({ filePath, jsonData }) => {
         const uuid = uuidv4();
@@ -309,7 +309,7 @@ const transformFiles = async (
       } else {
         const dirPath = path.dirname(resolvedSourcePath);
         const dirname = path.basename(dirPath);
-        let newFolderName: string = `${dirname}-${langISOCode}`;
+        let newFolderName: string = `values-${langISOCode}`;
 
         destPath = path.join(path.resolve(dirPath, ".."), newFolderName);
         fs.ensureDirSync(destPath);
